@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1116">
+<title>F1 24 Telemetria</title>
+<style>
+:root{--bg:#080b10;--panel:#111720;--panel2:#171f2b;--line:#273342;--fg:#f4f6f8;--mut:#91a0b2;--red:#e10600;--red2:#ff3028;--green:#20d18a;--yellow:#ffc857;--blue:#55aaff;--purple:#bd78ff;--radius:13px;--shadow:0 12px 30px #0005}
+*{box-sizing:border-box}html{min-height:100%;background:var(--bg)}body{margin:0;min-height:100vh;padding:0 0 calc(82px + env(safe-area-inset-bottom));background:radial-gradient(ellipse at 50% -20%,#202b3a 0,transparent 55%),var(--bg);color:var(--fg);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}button{font:inherit;cursor:pointer}
+header{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px max(16px,calc((100vw - 1440px)/2));background:#090d13ed;border-bottom:1px solid #ffffff12;backdrop-filter:blur(14px)}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}.brand-mark{width:39px;height:39px;display:grid;place-items:center;background:var(--red);clip-path:polygon(0 0,100% 0,82% 100%,0 100%);font-size:18px;font-weight:1000;font-style:italic;letter-spacing:-2px}.brand-copy{min-width:0}.brand h1{margin:0;font-size:17px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}.brand-sub{margin-top:2px;color:var(--mut);font-size:10px;font-weight:700;letter-spacing:.17em;text-transform:uppercase}
+.head-actions{display:flex;align-items:center;gap:9px}#status{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border:1px solid #8b96a533;border-radius:99px;background:#171e28;color:#aab5c2;font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}#status:before{content:"";width:7px;height:7px;border-radius:50%;background:#738092;box-shadow:0 0 0 3px #73809222}#status.on{color:#8af0c1;border-color:#20d18a55;background:#0d2b22}#status.on:before{background:var(--green);box-shadow:0 0 0 3px #20d18a22}
+#fs{width:37px;height:36px;border:1px solid var(--line);border-radius:9px;background:var(--panel2);color:var(--fg);font-size:18px}main{max-width:1440px;margin:0 auto;padding:18px 18px 24px}
+.trackbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 15px;padding:12px 15px;border:1px solid #ffffff12;border-left:3px solid var(--red);border-radius:10px;background:linear-gradient(100deg,#171f2b,#10151d);box-shadow:var(--shadow)}.track-eyebrow{color:var(--mut);font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}.track-name{margin-top:3px;font-size:16px;font-weight:900;letter-spacing:.03em;text-transform:uppercase}.track-right{color:var(--mut);font-size:11px;text-align:right}.track-right b{display:block;color:var(--fg);font-size:13px}
+.grid{display:grid;gap:13px;grid-template-columns:repeat(12,minmax(0,1fr))}.card{min-width:0;padding:16px;border:1px solid #ffffff12;border-radius:var(--radius);background:linear-gradient(145deg,#151d28,#10161f 75%);box-shadow:var(--shadow);position:relative;overflow:hidden}.card h2{display:flex;align-items:center;gap:8px;margin:0 0 14px;color:#aeb9c7;font-size:10px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}.card h2:before{content:"";width:3px;height:12px;border-radius:2px;background:var(--red)}.grid>.card:nth-child(1){grid-column:span 6}.grid>.card:nth-child(2),.grid>.card:nth-child(3),.grid>.card:nth-child(4),.grid>.card:nth-child(5){grid-column:span 3}.grid>.card:nth-child(6){grid-column:1/-1}
+.big{font-size:clamp(48px,6vw,76px);font-weight:900;line-height:.95;letter-spacing:-.06em}.unit{margin-left:6px;color:var(--mut);font-size:13px;font-weight:800}.gear{min-width:90px;color:#fff;font-size:clamp(76px,8vw,104px);font-weight:1000;line-height:.9;text-align:center;text-shadow:0 0 24px #ffffff20}.row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:9px 0;font-size:12px}.row span:first-child{color:var(--mut)}.row span:last-child{font-weight:800;text-align:right}
+.bar{height:9px;margin:7px 0 12px;border:1px solid #ffffff0b;border-radius:99px;background:#26313e;overflow:hidden;position:relative}.bar>i{display:block;width:0;height:100%;border-radius:inherit;transition:width .08s linear}.rpm>i{background:linear-gradient(90deg,#20d18a 0%,#a8d94b 55%,#ffc857 78%,#ff3e36 100%);box-shadow:0 0 12px #ff302855}#steerbar{height:12px;background:linear-gradient(90deg,#e10600 0 1px,#26313e 1px 49.5%,#aab5c2 49.5% 50.5%,#26313e 50.5% 99%,#e10600 99% 100%)}#steerbar>i{position:absolute;top:0;width:4px;height:100%;left:50%;background:#fff;box-shadow:0 0 8px #fff}
+.pill{display:inline-flex;align-items:center;margin:2px 5px 0 0;padding:5px 9px;border:1px solid #ffffff16;border-radius:5px;background:#222d3a;color:#8e9bad;font-size:9px;font-weight:900;letter-spacing:.1em}.pill.on{border-color:#20d18a66;background:#123a2d;color:#8af0c1}.tyres{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tyre{min-width:0;padding:10px 7px;border:1px solid #ffffff17;border-radius:9px;background:#202a37;text-align:center;font-variant-numeric:tabular-nums}.tyre b{display:block;margin:3px 0;font-size:22px;font-weight:900}.tyre small{display:block;color:#d4dce5;font-size:10px}.tyre small:last-child{color:#b7c1ce;font-size:9px}
+canvas{display:block;width:100%;height:160px}#chart{height:190px}.ttcols .card{margin-bottom:13px}.tt-top{display:flex;gap:8px;margin-bottom:12px}.seg{display:flex;min-width:0;overflow:hidden;border:1px solid #ffffff12;border-radius:9px;background:#0b1119}.seg button{flex:1;min-width:0;padding:11px 12px;border:0;background:transparent;color:var(--mut);font-size:11px;font-weight:800;white-space:nowrap}.seg button.on{background:var(--red);color:#fff;box-shadow:0 3px 12px #e1060044}#refseg{flex:1}#nseg button{padding-inline:11px}
+.gapcard{text-align:center;margin-bottom:12px;border-top:2px solid #39485a}.gap{font-size:clamp(58px,8vw,88px);font-weight:1000;line-height:1;letter-spacing:-.06em}.gap.neg{color:var(--green)}.gap.pos{color:#ff625d}.gaplabel{margin:8px 0 10px;color:var(--mut);font-size:11px}.note{min-height:16px;margin-bottom:6px;color:var(--mut);font-size:11px}.times{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}.times div{padding:9px 4px;border:1px solid #ffffff10;border-radius:9px;background:#0d141d;text-align:center}.times small{display:block;margin-bottom:4px;color:var(--mut);font-size:9px;font-weight:800;text-transform:uppercase}.times b{font-size:13px}.secs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}.sec{padding:10px 5px;border:1px solid #ffffff10;border-radius:9px;background:#202a37;text-align:center}.sec small{display:block;margin-bottom:4px;color:var(--mut);font-size:9px;font-weight:900}.sec b{font-size:15px}.sec[data-c=p],.mini[data-c=p]{background:#6632a0;border-color:#bd78ff66}.sec[data-c=g]{background:#126442;border-color:#20d18a66}.sec[data-c=y],.mini[data-c=y]{background:#806014;border-color:#ffc85766}.sec[data-c] small,.mini[data-c] small{color:#ffffffb8}.trk{margin:0 2px 10px;color:var(--mut);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+#minis{display:grid;gap:6px}.mini{min-width:0;min-height:59px;padding:6px 2px;border:1px solid #ffffff0c;border-radius:7px;background:#202a37;text-align:center}.mini small{display:block;color:var(--mut);font-size:9px;font-weight:800}.mini span{display:block;min-height:13px;margin:2px 0;color:#d5dce5;font-size:9px}.mini b{display:block;overflow:hidden;font-size:11px;white-space:nowrap}.mini.cur{outline:2px solid #fff;outline-offset:1px}.mini[data-c=g]{background:#126442;border-color:#20d18a66}.mini[data-c=r]{background:#82272a;border-color:#ff5a5866}#minis.dense b{font-size:10px}#minis.dense span{font-size:8px}#dchart{height:auto;aspect-ratio:8/3}.laps{max-height:340px;overflow:auto}.laps table{width:100%;border-collapse:collapse;font-size:11px}.laps th{position:sticky;top:0;padding:8px 4px;background:#151d28;color:var(--mut);font-size:9px;text-align:right;text-transform:uppercase}.laps td{padding:9px 4px;border-top:1px solid #ffffff0c;text-align:right}.laps th:first-child,.laps td:first-child{text-align:left}.laps tr.bad td{color:#778394;text-decoration:line-through}.laps tr.bad td:last-child{text-decoration:none}.laps tr.old td{opacity:.5}.laps td.p{color:var(--purple);font-weight:900}.laps td.m{color:var(--mut)}
+nav{position:fixed;z-index:30;right:0;bottom:0;left:0;display:flex;padding:7px 12px calc(7px + env(safe-area-inset-bottom));border-top:1px solid #ffffff15;background:#090d13f2;backdrop-filter:blur(16px)}nav button{flex:1;padding:12px 8px;border:0;border-radius:8px;background:transparent;color:var(--mut);font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}nav button:before{display:block;margin-bottom:4px;font-size:17px}nav button[data-tab=dash]:before{content:"◉"}nav button[data-tab=tt]:before{content:"◷"}nav button.on{background:#251313;color:#fff;box-shadow:inset 0 -2px 0 var(--red)}
+@media(max-width:900px){.grid>.card:nth-child(1){grid-column:span 6}.grid>.card:nth-child(2),.grid>.card:nth-child(3),.grid>.card:nth-child(4),.grid>.card:nth-child(5){grid-column:span 6}}
+@media(max-width:600px){header{padding:10px 12px}.brand-mark{width:34px;height:34px}.brand h1{font-size:14px}.brand-sub{font-size:8px}#status{padding:6px 8px;font-size:9px}main{padding:12px 10px 18px}.grid{gap:9px}.card{padding:12px;border-radius:11px}.grid>.card:nth-child(1){grid-column:1/-1}.grid>.card:nth-child(2),.grid>.card:nth-child(3),.grid>.card:nth-child(4),.grid>.card:nth-child(5){grid-column:span 6}.grid>.card:nth-child(6){grid-column:1/-1}.card h2{font-size:9px;margin-bottom:11px}.big{font-size:58px}.gear{font-size:76px;min-width:72px}.row{font-size:11px;margin:8px 0}.trackbar{padding:10px 12px}.track-name{font-size:13px}.track-right{font-size:9px}.ttcols{display:block}.tt-top{gap:5px}.seg button{padding:10px 7px;font-size:10px}#nseg button{padding-inline:8px}.times{gap:5px}.times b{font-size:11px}.times small{font-size:8px}.mini{min-height:53px}.laps table{font-size:10px}.laps td{padding:8px 3px}}
+@media(orientation:landscape) and (min-width:640px){.ttcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:13px;align-items:start}.gap{font-size:72px}}
+
+/* Offline kör-elemző */
+.top-tools{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-left:auto}.top-tools button{border:1px solid #ffffff30;background:#182231;color:#fff;padding:9px 13px;border-radius:9px;cursor:pointer;font-size:11px;font-weight:800}.top-tools button.on{background:#e10600;border-color:#e10600}
+.an-head{display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:18px}.an-head h2{font-size:21px;margin:0}.an-help{font-size:12px;color:#a9b6c7;line-height:1.55}.an-controls{display:flex;flex-wrap:wrap;gap:9px;align-items:end;margin-bottom:16px}.an-controls label{display:flex;flex-direction:column;gap:5px;color:#9dabba;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}.an-controls select,.an-controls input,.an-controls button{background:#202b3a;border:1px solid #435061;color:#fff;border-radius:9px;padding:10px;min-height:40px;max-width:min(420px,90vw)}.an-controls select{min-width:220px;max-width:360px}.an-controls button{background:#d50905;cursor:pointer;font-weight:900}.an-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px}.an-map{width:100%;height:auto;aspect-ratio:1.25;background:#0c131d;border-radius:10px}.an-minis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}.an-mini{border-radius:8px;padding:9px 4px;text-align:center;background:#263241;border:1px solid #ffffff15;min-height:63px}.an-mini strong{display:block;font-size:11px}.an-mini span{font-size:10px}.an-mini small{display:block;font-size:9px;color:#d8e0e9;margin-top:5px}.an-purple{background:#67309c!important}.an-green{background:#126442!important}.an-yellow{background:#806014!important}.an-red{background:#82272a!important}.an-neutral{background:#263241!important}.an-legend{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0;color:#b8c5d3;font-size:11px}.an-legend span:before{content:'● ';font-size:17px}.an-purple-dot:before{color:#b76bff}.an-green-dot:before{color:#22dc8d}.an-yellow-dot:before{color:#ffcf48}.an-red-dot:before{color:#ff5a58}.an-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 15px}.an-summary div{background:#202b3a;border-radius:8px;padding:12px;text-align:center}.an-summary small{display:block;color:#9eacbe;font-size:9px;font-weight:800}.an-summary strong{display:block;margin-top:5px;font-size:15px}.an-note{font-size:12px;color:#aabbcc;min-height:20px;line-height:1.6}.an-hidden{display:none!important}
+@media(max-width:800px){.an-grid{grid-template-columns:1fr}.an-minis{grid-template-columns:repeat(4,minmax(0,1fr))}.top-tools{margin-left:0}}
+/* Live Time Trial: csempés és pályanézet ugyanazon panelen. */
+.tt-view-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.tt-view-head h2{margin:0!important}
+.tt-view-seg button{padding:9px 12px;font-size:10px}
+#tt-map{width:100%;height:auto;aspect-ratio:1.25;background:#0c131d;border-radius:10px}
+#tt-map-wrap[hidden],#tt-tiles-wrap[hidden]{display:none!important}
+.tt-map-legend{margin:8px 0}
+@media(max-width:600px){.tt-view-head{align-items:flex-start}.tt-view-seg button{padding:9px 10px}}
+/* Versenymérnöki felület */
+.race-head{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;margin:5px 0 16px}.race-kicker{font-size:10px;color:#ff5e55;letter-spacing:.2em;font-weight:900}.race-head h2{font-size:clamp(20px,3vw,29px);margin:4px 0;letter-spacing:.05em}.race-head p{margin:4px 0;color:var(--mut);font-size:12px}.race-head-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.rc-live{padding:8px 12px;color:#9eabba;border:1px solid #ffffff24;border-radius:30px;font-size:10px;font-weight:900}.rc-live.on{color:#83eec0;background:#0a3222;border-color:#20d18a65}.rc-flag{border:1px solid #ffffff1f;background:#202b38;border-radius:8px;padding:9px 12px;font-size:12px;font-weight:900;letter-spacing:.05em}.rc-flag.sc{background:#d99211;color:#111}.rc-flag.vsc{background:#ebbc38;color:#111}.rc-flag.red{background:#ae2927;color:#fff}
+.race-metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:13px}.race-metric{background:linear-gradient(135deg,#1b2532,#121922);border:1px solid #ffffff14;border-top:2px solid #ec1c17;border-radius:11px;padding:13px;min-width:0}.race-metric small{display:block;color:#aebccc;font-size:9px;font-weight:900;letter-spacing:.08em}.race-metric strong{display:block;font-size:clamp(20px,2.6vw,32px);letter-spacing:-.045em;margin:6px 0 3px;white-space:nowrap}.race-metric span{display:block;color:var(--mut);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.race-columns{display:grid;grid-template-columns:minmax(0,1.85fr) minmax(300px,1fr);align-items:start;gap:13px}.race-primary,.race-sidebar{display:grid;gap:13px;min-width:0}.race-card h2{margin-bottom:12px}.race-panel-title{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.race-panel-title h2{margin-bottom:0}.race-map-actions{display:flex;gap:14px;color:#b6c5d4;font-size:10px;font-weight:800;flex-wrap:wrap}.race-map-actions label{display:flex;align-items:center;gap:5px;cursor:pointer}.race-map-actions input{accent-color:#e10600}.race-card #rc-map{width:100%;height:auto;aspect-ratio:1100/780;border:1px solid #273644;border-radius:12px;background:#0b111a}.race-legend{display:flex;gap:13px;flex-wrap:wrap;margin:11px 0 0;font-size:10px;font-weight:700;color:#adbac9}.race-legend span:before{content:'●';font-size:16px;margin-right:4px}.race-legend .mine:before{color:#fff}.race-legend .ahead:before{color:#ff6060}.race-legend .behind:before{color:#20d18a}.race-legend .pit:before{color:#ffc857}.race-legend .caution:before{color:#e6b525}.race-footnote{font-size:10px;line-height:1.6;color:#91a4b9;margin:9px 0 0}
+.race-estimate-tag{font-size:9px;font-weight:900;letter-spacing:.08em;background:#3c2c1b;color:#f0c77e;border:1px solid #b1843877;padding:6px 9px;border-radius:6px}.race-pit-core{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:8px}.race-pit-core>div{border:1px solid #ffffff16;background:#0b121b;border-radius:10px;padding:13px}.race-pit-core small,.race-pit-core span{display:block;color:#9eacbc;font-size:9px;font-weight:750}.race-pit-core strong{display:block;margin:7px 0;font-size:clamp(25px,4vw,48px);line-height:1;font-weight:1000;letter-spacing:-.06em}.race-pit-core>div:first-child strong{color:#f3d47a}.race-return-row{margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-left:3px solid #e10600;background:#1e2936;padding:11px 13px}.race-return-row span{color:#aabbca;font-size:11px}.race-return-row b{font-size:13px}.race-pit-order{margin:10px 0;padding:10px 12px;border:1px solid #ffffff14;background:#111a25;border-radius:8px;font-size:11px;color:#c5d1e0;line-height:1.5}.race-pit-order .red{color:#ff7770;font-weight:900}.race-pit-order .green{color:#4beba4;font-weight:900}.race-setup{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;margin-top:14px}.race-setup label{display:flex;flex-direction:column;gap:6px;font-size:9px;font-weight:800;color:#bac7d6;text-transform:uppercase}.race-setup input,.race-setup select{min-width:0;width:100%;background:#202b39;color:#fff;border:1px solid #49576a;border-radius:8px;padding:10px;font:inherit;font-size:12px;min-height:39px}
+.race-table-wrap{width:100%;overflow:auto}.race-table{width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap}.race-table th{text-align:left;color:#a1b1c5;font-size:9px;background:#17212c;padding:11px 9px}.race-table td{border-top:1px solid #ffffff12;padding:11px 9px;color:#d7e0ea}.race-table tr.me td{background:#512524b0;color:#fff;font-weight:900}.race-table tr.pit td{color:#f5c45c}.race-table td strong{font-size:12px}.race-table .tyre-tag{display:inline-grid;place-items:center;border:2px solid #9fb0c0;border-radius:100%;width:23px;height:23px;font-size:10px;font-weight:900;color:#fff}.race-muted{color:#8d9db1;font-size:10px}
+.race-data-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #ffffff12;font-size:11px}.race-data-row:last-child{border-bottom:0}.race-data-row span{color:#a0afc0}.race-data-row b{font-size:12px;text-align:right;max-width:56%}.race-compound{display:flex;align-items:center;gap:12px;background:#111b27;border-radius:9px;padding:12px;margin-bottom:9px}.race-tyre-dot{height:43px;width:43px;border:4px solid #afc0d1;border-radius:50%;display:grid;place-items:center;font-weight:900}.race-compound strong{display:block;font-size:17px}.race-compound small{display:block;color:#9eabba;margin-top:3px}.race-reset{width:100%;margin-top:14px;background:#263242;color:#dce6ee;border:1px solid #ffffff21;border-radius:8px;padding:10px;font-weight:800;cursor:pointer}
+@media(max-width:1150px){.race-columns{grid-template-columns:minmax(0,1.45fr) minmax(275px,1fr)}.race-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.race-setup{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:800px){.race-columns{grid-template-columns:1fr}.race-pit-core{grid-template-columns:repeat(3,minmax(0,1fr))}.race-metric strong{font-size:27px}}
+@media(max-width:520px){.race-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.race-metric{padding:10px}.race-head-right{width:100%}.race-pit-core{grid-template-columns:1fr 1fr}.race-pit-core>div:first-child{grid-column:1/-1}.race-pit-core strong{font-size:34px}.race-setup{grid-template-columns:1fr 1fr}.race-map-actions{gap:8px}.race-head h2{font-size:19px}nav button{font-size:9px;padding:11px 4px}}
+nav button[data-tab=race]:before{content:'⚑'}nav button[data-tab=analyze]:before{content:'⌕'}
+
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="brand-mark">F1</div><div class="brand-copy"><h1>Race Engineering</h1><div class="brand-sub">F1 24 · Live telemetry</div></div></div>
+  <div class="head-actions"><button id="an-top-link" type="button" title="Mentett körök offline elemzése" style="background:#b90806;color:white;border:0;border-radius:8px;padding:10px 13px;font-weight:900;cursor:pointer;font-size:11px">KÖRELEMZŐ</button><span id="status">Kapcsolódás…</span><button id="fs" title="Teljes képernyő" aria-label="Teljes képernyő">⛶</button></div>
+</header>
+<main>
+<div class="trackbar"><div><div class="track-eyebrow">Aktuális pálya</div><div class="track-name" id="dash-track">Pálya —</div></div><div class="track-right"><span>Xbox UDP · 20777</span><b id="dash-session">Még nincs telemetria</b></div></div>
+
+<div id="tab-dash">
+<div class="grid">
+  <div class="card">
+    <h2>Sebesség / fokozat</h2>
+    <div style="display:flex; align-items:center; justify-content:space-around">
+      <div><span class="big" id="speed">0</span><span class="unit">km/h</span></div>
+      <div class="gear" id="gear">N</div>
+    </div>
+    <div class="bar rpm"><i id="rpmbar"></i></div>
+    <div class="row"><span>RPM</span><span id="rpm">0</span></div>
+    <div><span class="pill" id="drs">DRS</span><span class="pill" id="pit">PIT</span><span class="pill" id="inv">INVALID</span></div>
+  </div>
+
+  <div class="card">
+    <h2>Pedálok / kormány</h2>
+    <div class="row"><span>Gáz</span><span id="thr">0%</span></div>
+    <div class="bar"><i id="thrbar" style="background:var(--g)"></i></div>
+    <div class="row"><span>Fék</span><span id="brk">0%</span></div>
+    <div class="bar"><i id="brkbar" style="background:var(--r)"></i></div>
+    <div class="row"><span>Kormány</span><span id="str">0%</span></div>
+    <div class="bar" id="steerbar"><i id="strbar"></i></div>
+  </div>
+
+  <div class="card">
+    <h2>Kör</h2>
+    <div class="row"><span>Pozíció</span><span id="pos">-</span></div>
+    <div class="row"><span>Kör</span><span id="lap">-</span></div>
+    <div class="row"><span>Aktuális</span><span id="cur">-</span></div>
+    <div class="row"><span>Előző</span><span id="last">-</span></div>
+    <div class="row"><span>Szektor</span><span id="sec">-</span></div>
+    <div class="row"><span>S1 / S2</span><span id="s12">-</span></div>
+    <div class="row"><span>Büntetés</span><span id="pen">0 s</span></div>
+  </div>
+
+  <div class="card">
+    <h2>Gumik (felszín °C · kopás)</h2>
+    <div class="tyres" id="tyres"></div>
+    <div class="row" style="margin-top:10px"><span>Keverék</span><span id="comp">-</span></div>
+    <div class="row"><span>Gumi kora</span><span id="tage">-</span></div>
+  </div>
+
+  <div class="card">
+    <h2>Üzemanyag / ERS</h2>
+    <div class="row"><span>Tank</span><span id="fuel">-</span></div>
+    <div class="row"><span>Hátralévő körök</span><span id="fuellaps">-</span></div>
+    <div class="row"><span>Keverék</span><span id="fmix">-</span></div>
+    <div class="row"><span>ERS töltöttség</span><span id="ers">-</span></div>
+    <div class="bar"><i id="ersbar" style="background:var(--b)"></i></div>
+    <div class="row"><span>ERS mód</span><span id="ersmode">-</span></div>
+    <div class="row"><span>Fékelosztás</span><span id="bb">-</span></div>
+    <div class="row"><span>Motor °C</span><span id="eng">-</span></div>
+  </div>
+
+  <div class="card" style="grid-column: 1 / -1">
+    <h2>Utolsó ~20 mp (sebesség · gáz · fék)</h2>
+    <canvas id="chart" width="1200" height="320"></canvas>
+  </div>
+</div>
+</div>
+
+<div id="tab-tt" hidden>
+  <div class="ttcols">
+    <div class="col">
+      <div class="trk" id="trkname">—</div>
+      <div class="tt-top">
+        <div class="seg" id="refseg"><button data-ref="prev">Előző kör</button><button data-ref="best">Legjobb kör</button></div>
+        <div class="seg" id="nseg"><button data-n="12">12</button><button data-n="24">24</button><button data-n="40">40</button></div>
+      </div>
+      <div class="card gapcard">
+        <div class="note" id="ttnote"></div>
+        <div class="note">Körarchívum: a befejezett körök és a rögzített telemetria automatikusan JSON-fájlba kerülnek.</div>
+        <div class="gap" id="gap">—</div>
+        <div class="gaplabel" id="gaplabel">&nbsp;</div>
+        <div class="bar" style="margin-bottom:0"><i id="progbar" style="background:var(--b)"></i></div>
+      </div>
+      <div class="secs">
+        <div class="sec" id="sec0"><small>S1</small><b>-</b></div>
+        <div class="sec" id="sec1"><small>S2</small><b>-</b></div>
+        <div class="sec" id="sec2"><small>S3</small><b>-</b></div>
+      </div>
+      <div class="times">
+        <div><small>Kör</small><b id="tt-lap">-</b></div>
+        <div><small>Aktuális</small><b id="tt-cur">-</b></div>
+        <div><small>Előző</small><b id="tt-prev">-</b></div>
+        <div><small>Legjobb (helyi)</small><b id="tt-best">-</b></div>
+        <div><small>Personal Best (játék)</small><b id="tt-gamepb">-</b></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card">
+        <div class="tt-view-head"><h2 id="gridtitle">Mini-szektorok</h2><div class="seg tt-view-seg" id="tt-view-seg" aria-label="Miniszektor megjelenítés">
+          <button type="button" data-view="tiles">▦ Csempék</button><button type="button" data-view="map">◇ Pályanézet</button>
+        </div></div>
+        <div id="tt-tiles-wrap"><div id="minis"></div></div>
+        <div id="tt-map-wrap" hidden>
+          <canvas id="tt-map" width="900" height="720" role="img" aria-label="Élő, miniszektorokra színezett pályavonal"></canvas>
+          <div class="an-legend tt-map-legend"><span class="an-purple-dot">Session leggyorsabb</span><span class="an-green-dot">Gyorsabb</span><span class="an-yellow-dot">Azonos</span><span class="an-red-dot">Lassabb</span></div>
+          <div class="an-note" id="tt-map-note">A pályanézethez a kör során rögzített pozícióadatokat használjuk.</div>
+        </div>
+      </div>
+      <div class="card"><h2>Gap a kör során (zöld = gyorsabb)</h2><canvas id="dchart" width="800" height="300"></canvas></div>
+      <div class="card"><h2>Körök</h2><div id="laps" class="laps"></div></div>
+    </div>
+  </div>
+</div>
+<div id="tab-race" hidden>
+  <div class="race-head">
+    <div><div class="race-kicker">LIVE RACE CONTROL / F1 24</div><h2>VERSENYMÉRNÖKI PULT</h2><p>Élő mezőnykövetés · boxkiállás utáni visszasorolás · SC/VSC-stratégia</p></div>
+    <div class="race-head-right"><span id="rc-connection" class="rc-live">UDP-adatokra vár</span><span id="rc-flag" class="rc-flag">VERSENYÁLLAPOT —</span></div>
+  </div>
+  <div class="race-metrics">
+    <div class="race-metric"><small>HELYEZÉS</small><strong id="rc-pos">P—</strong><span id="rc-cars-count">— autó</span></div>
+    <div class="race-metric"><small>KÖR</small><strong id="rc-lap">— / —</strong><span id="rc-track">Pályára várva</span></div>
+    <div class="race-metric"><small>ELŐTTEM</small><strong id="rc-ahead-gap">—</strong><span id="rc-ahead-name">—</span></div>
+    <div class="race-metric"><small>MÖGÖTTEM</small><strong id="rc-behind-gap">—</strong><span id="rc-behind-name">—</span></div>
+    <div class="race-metric"><small>ERS</small><strong id="rc-ers">—%</strong><span id="rc-drs">DRS: —</span></div>
+    <div class="race-metric"><small>ÜZEMANYAG</small><strong id="rc-fuel">—</strong><span id="rc-fuel-note">—</span></div>
+  </div>
+  <div class="race-columns">
+    <div class="race-primary">
+      <section class="card race-card">
+        <div class="race-panel-title"><h2>ÉLŐ PÁLYATÉRKÉP</h2><div class="race-map-actions"><label><input id="rc-labels" type="checkbox" checked> Pilótanevek</label><label><input id="rc-follow" type="checkbox" checked> Saját autó kiemelése</label></div></div>
+        <canvas id="rc-map" width="1100" height="780" role="img" aria-label="Pálya és az autók valós idejű helyzete"></canvas>
+        <div class="race-legend"><span class="mine">Saját autó</span><span class="ahead">Előttem</span><span class="behind">Mögöttem</span><span class="pit">Boxban</span><span class="caution">Sárga zászlós szektor</span></div>
+        <p id="rc-map-note" class="race-footnote">A pályakörvonal a Motion-telemetriából épül fel; a korábban mentett nyomvonalat újra felhasználjuk.</p>
+      </section>
+      <section class="card race-card pit-card">
+        <div class="race-panel-title"><h2>BOXKIÁLLÁS / REJOIN PROJEKCIÓ</h2><span class="race-estimate-tag">BECSLÉS, NEM GARANTÁLT</span></div>
+        <div class="race-pit-core">
+          <div><small>VÁRHATÓ VISSZASOROLÁS</small><strong id="rc-pit-pos">P—</strong><span id="rc-pit-confidence">Várakozás ellenféladatokra</span></div>
+          <div><small>BECSÜLT IDŐVESZTESÉG</small><strong id="rc-pit-loss">— s</strong><span id="rc-pit-scenario">Zöld zászló</span></div>
+          <div><small>JÁTÉK SAJÁT ELŐREJELZÉSE</small><strong id="rc-game-pit">P—</strong><span>F1 24 UDP Session csomag</span></div>
+        </div>
+        <div class="race-return-row"><span>Visszaérkezés után</span><b id="rc-pit-surround">—</b></div>
+        <div id="rc-pit-order" class="race-pit-order">A számításhoz legalább két autó versenypozíciója szükséges.</div>
+        <div class="race-setup">
+          <label>Forgatókönyv<select id="rc-scenario"><option value="auto">Automatikus · aktuális SC/VSC</option><option value="green">Zöld zászló</option><option value="vsc">Virtuális Safety Car</option><option value="sc">Safety Car</option></select></label>
+          <label>Normál boxveszteség (s)<input id="rc-base-loss" type="number" min="8" max="65" step="0.5" value="22"></label>
+          <label>VSC / normál (%)<input id="rc-vsc-factor" type="number" min="30" max="100" step="5" value="65"></label>
+          <label>SC / normál (%)<input id="rc-sc-factor" type="number" min="25" max="100" step="5" value="50"></label>
+        </div>
+        <p class="race-footnote" id="rc-calibration-note">A boxveszteség pályánként állítható. Az alapérték csak kiinduló becslés; valódi kiállásból külön mérést is tárolunk.</p>
+        <p class="race-footnote">SC/VSC alatt a relatív veszteség jellemzően kisebb, de függ a mezőny helyzetétől, a boxbejárattól, a bolytól és a büntetésektől. A program nem tudja garantálni, hogy pontosan ki elé érkezel.</p>
+      </section>
+      <section class="card race-card"><div class="race-panel-title"><h2>ÉLŐ MEZŐNY / INTERVALLUMOK</h2><span id="rc-classification-note" class="race-muted">Következő frissítésre vár…</span></div>
+        <div class="race-table-wrap"><table class="race-table"><thead><tr><th>H</th><th>PILÓTA</th><th>GUMI</th><th>KÖR</th><th>RELATÍV GAP*</th><th>BOX</th><th>BÜNT.</th></tr></thead><tbody id="rc-leaderboard"><tr><td colspan="7">Nincs versenyadat</td></tr></tbody></table></div>
+        <p class="race-footnote">* A relatív gap a teljesített pályatávolságból és becsült átlagtempóból számolódik; nem azonos az időmérő rendszer hivatalos résidejével. Lekörözésnél eltérhet.</p>
+      </section>
+    </div>
+    <aside class="race-sidebar">
+      <section class="card race-card"><h2>RACE CONTROL</h2>
+        <div class="race-data-row"><span>Állapot</span><b id="rc-race-status">—</b></div>
+        <div class="race-data-row"><span>SC-delta (játék)</span><b id="rc-sc-delta">—</b></div>
+        <div class="race-data-row"><span>Eső esélye</span><b id="rc-rain">—</b></div>
+        <div class="race-data-row"><span>Levegő / aszfalt</span><b id="rc-temps">—</b></div>
+        <div class="race-data-row"><span>Boxutcai limit</span><b id="rc-pit-limit">—</b></div>
+        <div class="race-data-row"><span>Box limiter</span><b id="rc-limiter">—</b></div>
+        <div class="race-data-row"><span>Ideális kiállási kör</span><b id="rc-pit-window">—</b></div>
+        <div class="race-data-row"><span>Utolsó versenyesemény</span><b id="rc-last-event">—</b></div>
+      </section>
+      <section class="card race-card"><h2>GUMIK / ÜZEMANYAG / ERS</h2>
+        <div class="race-compound"><div class="race-tyre-dot" id="rc-tyre-dot">?</div><div><strong id="rc-tyre">—</strong><small id="rc-tyre-age">— körös szett</small></div></div>
+        <div class="race-data-row"><span>Legnagyobb gumikopás</span><b id="rc-wear">—</b></div>
+        <div class="race-data-row"><span>Üzemanyag tartalék</span><b id="rc-fuel-laps">—</b></div>
+        <div class="race-data-row"><span>DRS engedély</span><b id="rc-drs-allowed">—</b></div>
+        <div class="race-data-row"><span>ERS energiaszint</span><b id="rc-ers-detail">—</b></div>
+        <div class="race-data-row"><span>Boxkiállások</span><b id="rc-stops">—</b></div>
+        <div class="race-data-row"><span>Büntetések / figyelmeztetések</span><b id="rc-penalties">—</b></div>
+      </section>
+      <section class="card race-card"><h2>ÁLLAPOT / SÉRÜLÉSEK</h2>
+        <div class="race-data-row"><span>Első szárny (bal / jobb)</span><b id="rc-wing">—</b></div>
+        <div class="race-data-row"><span>Hátsó szárny</span><b id="rc-rear-wing">—</b></div>
+        <div class="race-data-row"><span>Padlólemez / diffúzor</span><b id="rc-floor">—</b></div>
+        <div class="race-data-row"><span>Motor / váltó</span><b id="rc-engine">—</b></div>
+        <div class="race-data-row"><span>DRS / ERS hiba</span><b id="rc-fault">—</b></div>
+      </section>
+      <section class="card race-card"><h2>PÁLYASPECIFIKUS BOXKALIBRÁCIÓ</h2>
+        <p class="race-footnote">Az adott pálya beállítása ezen a böngészőn megmarad. A szerver a tényleges kiállásból próbál megtanulni egy közelítő veszteséget, és pályánként JSON-ba menti.</p>
+        <div class="race-data-row"><span>Zöld zászló alatt</span><b id="rc-cal-green">Nincs mérés</b></div>
+        <div class="race-data-row"><span>VSC alatt</span><b id="rc-cal-vsc">Nincs mérés</b></div>
+        <div class="race-data-row"><span>SC alatt</span><b id="rc-cal-sc">Nincs mérés</b></div>
+        <button type="button" class="race-reset" id="rc-reset-settings">Saját pályabeállítás visszaállítása</button>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<div id="tab-analyze" hidden>
+  <div class="an-head"><div><h2>KÖRELEMZŐ / TRACK MAP</h2><div class="an-help">Offline JSON-fájlok és a szerveren automatikusan mentett körök elemzése. A színválasztás a miniszektorokra és a nyomvonalra is érvényes.</div></div></div>
+  <div class="card">
+    <div class="an-controls">
+      <label>Körök a szerver archívumában<select id="an-library"><option value="">Válassz mentett kört…</option></select></label>
+      <button type="button" id="an-add">Kör hozzáadása</button>
+      <button type="button" id="an-refresh">Archívum frissítése</button>
+      <label>Offline JSON betöltése<input id="an-files" type="file" accept=".json,application/json" multiple></label>
+    </div>
+    <div class="an-controls">
+      <label>Elemzett kör<select id="an-current"></select></label>
+      <label>Összehasonlítási kör<select id="an-reference"></select></label>
+      <label>Mini-szektorok<select id="an-count"><option>12</option><option selected>24</option><option>40</option></select></label>
+      <label>Nyomvonal<select id="an-color-mode"><option value="color">Színezett miniszektorok</option><option value="plain">Egyszínű pálya</option></select></label>
+    </div>
+    <div id="an-message" class="an-note">Válassz ki egy szerveren mentett kört vagy tölts be JSON-fájlokat.</div>
+  </div>
+  <div class="an-grid" style="margin-top:14px">
+    <section class="card"><h2>Pályatérkép · miniszektorok</h2><canvas id="an-map" class="an-map" width="900" height="720"></canvas><div class="an-legend"><span class="an-purple-dot">Session-rekord</span><span class="an-green-dot">Gyorsabb</span><span class="an-yellow-dot">Azonos (±0,005 s)</span><span class="an-red-dot">Lassabb</span></div><div id="an-map-note" class="an-note"></div></section>
+    <section class="card"><h2>Miniszektor-összehasonlítás</h2><div class="an-summary"><div><small>Vizsgált kör</small><strong id="an-time">–</strong></div><div><small>Referencia</small><strong id="an-ref-time">–</strong></div><div><small>Különbség</small><strong id="an-difference">–</strong></div></div><div id="an-minis" class="an-minis"></div><p class="an-note">Lila: a betöltött, érvényes körök között a leggyorsabb adott miniszektor. Zöld: gyorsabb a referenciánál. Sárga: közel azonos. Piros: lassabb.</p></section>
+  </div>
+</div>
+</main>
+
+<nav id="nav">
+  <button data-tab="dash">Telemetria</button>
+  <button data-tab="race">Verseny</button>
+  <button data-tab="tt">Time Trial</button>
+  <button data-tab="analyze">Körelemző</button>
+</nav>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmt = ms => {
+  if (ms == null || !Number.isFinite(ms) || ms <= 0) return '-';
+  const m = Math.floor(ms / 60000), s = ((ms % 60000) / 1000).toFixed(3).padStart(6, '0');
+  return m ? `${m}:${s}` : s;
+};
+const COMP = { 16:'Soft', 17:'Medium', 18:'Hard', 7:'Inter', 8:'Wet' };
+const MIX = ['Lean','Standard','Rich','Max'];
+const ERSM = ['None','Medium','Hotlap','Overtake'];
+const tempColor = t => t < 80 ? '#2b5fa8' : t < 105 ? '#1f7a43' : t < 120 ? '#a87b1f' : '#a82b2b';
+
+// gumik: kijelzés sorrend FL FR / RL RR; a játék sorrendje RL RR FL FR
+const order = [2, 3, 0, 1], names = ['FL', 'FR', 'RL', 'RR'];
+$('tyres').innerHTML = names.map((n, i) => `<div class="tyre" id="ty${i}"><small>${n}</small><b>-</b><small>-</small></div>`).join('');
+
+const N = 600, hist = { v: [], t: [], b: [] };
+const cv = $('chart'), cx = cv.getContext('2d');
+function draw() {
+  const W = cv.width, H = cv.height;
+  cx.clearRect(0, 0, W, H);
+  cx.strokeStyle = '#262c36'; cx.lineWidth = 1;
+  for (let i = 1; i < 4; i++) { cx.beginPath(); cx.moveTo(0, H * i / 4); cx.lineTo(W, H * i / 4); cx.stroke(); }
+  const line = (arr, max, col) => {
+    cx.strokeStyle = col; cx.lineWidth = 2; cx.beginPath();
+    arr.forEach((v, i) => {
+      const x = i / (N - 1) * W, y = H - Math.min(v / max, 1) * (H - 4) - 2;
+      i ? cx.lineTo(x, y) : cx.moveTo(x, y);
+    });
+    cx.stroke();
+  };
+  line(hist.v, 360, '#4da3ff');
+  line(hist.t, 1, '#2ecc71');
+  line(hist.b, 1, '#ff4d4d');
+}
+
+function update(s) {
+  $('status').textContent = s.connected ? 'élő adat' : ((s.trackName || (ttp && ttp.name)) ? 'UDP szünetel' : 'nincs adat');
+  $('status').className = s.connected ? 'on' : '';
+  const knownTrack = s.trackName || (ttp && ttp.name);
+  $('dash-track').textContent = knownTrack || 'Pálya —';
+  $('dash-session').textContent = s.connected ? 'Élő UDP-telemetria' : knownTrack ? 'Legutóbbi pálya · nincs friss adat' : 'Még nincs telemetria';
+  if (s.speed === undefined) return;
+
+  $('speed').textContent = s.speed;
+  $('gear').textContent = s.gear < 0 ? 'R' : s.gear === 0 ? 'N' : s.gear;
+  $('rpm').textContent = s.rpm;
+  $('rpmbar').style.width = (s.revPct || 0) + '%';
+  $('drs').className = 'pill' + (s.drs ? ' on' : '');
+  $('pit').className = 'pill' + (s.pit ? ' on' : '');
+  $('inv').className = 'pill' + (s.invalid ? ' on' : '');
+
+  const pct = v => Math.round(v * 100) + '%';
+  $('thr').textContent = pct(s.throttle); $('thrbar').style.width = pct(s.throttle);
+  $('brk').textContent = pct(s.brake);    $('brkbar').style.width = pct(s.brake);
+  $('str').textContent = pct(s.steer);
+  $('strbar').style.left = (50 + Math.max(-1, Math.min(1, s.steer || 0)) * 48) + '%';
+
+  $('pos').textContent = s.pos ?? '-';
+  $('lap').textContent = s.lap ?? '-';
+  $('cur').textContent = fmt(s.curLap);
+  $('last').textContent = fmt(s.lastLap);
+  $('sec').textContent = s.sector ?? '-';
+  $('s12').textContent = `${fmt(s.s1)} / ${fmt(s.s2)}`;
+  $('pen').textContent = (s.penalties || 0) + ' s';
+
+  if (s.tyreSurf) order.forEach((gi, i) => {
+    const el = $('ty' + i), t = s.tyreSurf[gi];
+    el.style.background = tempColor(t);
+    el.children[1].textContent = t + '°';
+    const w = s.tyreWear ? Math.round(s.tyreWear[gi]) + '% kopás' : '';
+    const pressure = s.tyrePress && Number.isFinite(s.tyrePress[gi]) ? s.tyrePress[gi].toFixed(1) + ' psi' : '';
+     el.children[2].textContent = [w, pressure].filter(Boolean).join(' · ') || 'Nincs adat';
+  });
+  $('comp').textContent = COMP[s.compound] || '-';
+  $('tage').textContent = s.tyreAge != null ? s.tyreAge + ' kör' : '-';
+
+  $('fuel').textContent = s.fuel != null ? s.fuel.toFixed(1) + ' kg' : '-';
+  $('fuellaps').textContent = s.fuelLaps != null ? (s.fuelLaps >= 0 ? '+' : '') + s.fuelLaps.toFixed(2) : '-';
+  $('fmix').textContent = MIX[s.fuelMix] || '-';
+  const ersPct = Math.max(0, Math.min(100, (s.ers || 0) / 4000000 * 100));
+  $('ers').textContent = ersPct.toFixed(0) + '%';
+  $('ersbar').style.width = ersPct + '%';
+  $('ersmode').textContent = ERSM[s.ersMode] || '-';
+  $('bb').textContent = s.brakeBias != null ? s.brakeBias + '%' : '-';
+  $('eng').textContent = s.engineTemp != null ? s.engineTemp + '°' : '-';
+
+  for (const [k, v] of [['v', s.speed], ['t', s.throttle], ['b', s.brake]]) {
+    hist[k].push(v); if (hist[k].length > N) hist[k].shift();
+  }
+}
+
+// ---------- Time Trial tab ----------
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+};
+let ttp = null, ttRef = store.get('ttRef', 'prev'), ttN = +store.get('ttN', 24), ttDirty = true;
+let lastSeq = null, holdUntil = 0, wasHolding = false, curIdx = -1, lastChart = 0, cells = [];
+let lapsData = null, lapsRev = -1;
+// A Time Trial nézetválasztás újratöltéskor is megmarad.
+let ttView = store.get('ttView', 'tiles') === 'map' ? 'map' : 'tiles';
+let liveMap = null, liveMapBusy = false, liveMapAt = 0, liveMapDrawAt = 0;
+function setTTView(view) {
+  ttView = view === 'map' ? 'map' : 'tiles';
+  store.set('ttView', ttView);
+  $('tt-tiles-wrap').hidden = ttView !== 'tiles';
+  $('tt-map-wrap').hidden = ttView !== 'map';
+  document.querySelectorAll('#tt-view-seg button').forEach(b => b.classList.toggle('on', b.dataset.view === ttView));
+  ttDirty = true;
+  if (ttView === 'map') refreshLiveMap();
+}
+document.querySelectorAll('#tt-view-seg button').forEach(b => b.onclick = () => setTTView(b.dataset.view));
+async function refreshLiveMap() {
+  if (ttView !== 'map' || liveMapBusy || $('tab-tt').hidden || Date.now() - liveMapAt < 850) return;
+  liveMapBusy = true; liveMapAt = Date.now();
+  try { const r = await fetch('/tt/map', { cache:'no-store' }); if (!r.ok) throw Error('HTTP '+r.status); liveMap = await r.json(); }
+  catch (_) { liveMap = null; }
+  finally { liveMapBusy = false; }
+}
+function ttMapColors(cur, ref, P, bestSplits) {
+  const st = P / ttN;
+  return Array.from({length:ttN},(_,i)=>{
+    const a=i*st,b=(i+1)*st;
+    const seg=cur && Number.isFinite(cur[a]) && Number.isFinite(cur[b]) ? cur[b]-cur[a] : null;
+    const refSeg=ref && Number.isFinite(ref[a]) && Number.isFinite(ref[b]) ? ref[b]-ref[a] : null;
+    if(seg===null)return 'neutral';
+    // A lila elsőbbséget élvez; érvényes session-rekord esetén.
+    if(bestSplits && Number.isFinite(bestSplits[i]) && seg <= bestSplits[i] + .5)return 'purple';
+    if(refSeg===null)return 'neutral';
+    const diff=seg-refSeg;
+    return diff < -5 ? 'green' : diff > 5 ? 'red' : 'yellow';
+  });
+}
+function drawTTMap(cur, ref, p, holding, prog) {
+  const canvas=$('tt-map'),ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height;
+  ctx.fillStyle='#0c131d';ctx.fillRect(0,0,W,H);
+  const m=liveMap, note=$('tt-map-note'), L=Number(p.trackLen);
+  const convert = arr => (Array.isArray(arr)?arr:[]).filter(a=>Array.isArray(a)&&a.length===3&&a.every(Number.isFinite))
+    .map(a=>({d:a[0],x:a[1],z:a[2]})).filter(a=>a.d>=0&&a.d<=L+50&&Math.abs(a.x)<100000&&Math.abs(a.z)<100000).sort((a,b)=>a.d-b.d);
+  const active=m&&m.trackLen===L?convert(m.active):[];
+  const baseline=m&&m.trackLen===L?convert(ttRef==='best'?m.best:m.previous):[];
+  const alternative=m&&m.trackLen===L?convert(ttRef==='best'?m.previous:m.best):[];
+  const base=baseline.length>=20?baseline:alternative.length>=20?alternative:active;
+  const pts=holding && active.length<20?base:base;
+  if(pts.length<2){
+    ctx.fillStyle='#b7c3d2';ctx.textAlign='center';ctx.font='21px system-ui';
+    ctx.fillText('Még nincs pályavonal',W/2,H/2-12);
+    ctx.font='15px system-ui';ctx.fillText('Menj egy kört, hogy a rendszer rögzítse a nyomvonalat.',W/2,H/2+20);
+    note.textContent='A pályarajzhoz a Motion UDP pozícióadatai szükségesek. A régi körökben ezek hiányozhatnak.';
+    return;
+  }
+  const minX=Math.min(...pts.map(p=>p.x)),maxX=Math.max(...pts.map(p=>p.x));
+  const minZ=Math.min(...pts.map(p=>p.z)),maxZ=Math.max(...pts.map(p=>p.z));
+  const scale=Math.min((W-100)/Math.max(1,maxX-minX),(H-100)/Math.max(1,maxZ-minZ));
+  const X=a=>(a.x-(minX+maxX)/2)*scale+W/2, Y=a=>(a.z-(minZ+maxZ)/2)*-scale+H/2;
+  const bestSplits=p.bestSplit&&p.bestSplit[ttN];
+  const colors=ttMapColors(cur,ref,p.P,bestSplits);
+  const palette={purple:'#b76bff',green:'#20d18a',yellow:'#ffc857',red:'#fa5252',neutral:'#68788a'};
+  const trace=(points,width,getColor)=>{
+    ctx.lineCap='round';ctx.lineJoin='round';ctx.lineWidth=width;
+    for(let i=1;i<points.length;i++){
+      const a=points[i-1],b=points[i];if(b.d-a.d>L*.12)continue;
+      ctx.strokeStyle=getColor(a,b);ctx.beginPath();ctx.moveTo(X(a),Y(a));ctx.lineTo(X(b),Y(b));ctx.stroke();
+    }
+  };
+  trace(pts,18,()=>'#273343');
+  trace(pts,10,(a,b)=>palette[colors[Math.min(ttN-1,Math.max(0,Math.floor((a.d+b.d)/2/L*ttN)))]]);
+  // Az aktuális kör bejárt szakasza és pozíciója külön kiemelve.
+  if(active.length>=2 && base!==active){trace(active,3,()=>'#f5f5f7');}
+  const marker=active.length?active[active.length-1]:pts[Math.min(pts.length-1,Math.max(0,Math.round(prog*(pts.length-1))))];
+  if(marker){ctx.fillStyle='#fff';ctx.strokeStyle='#05080d';ctx.lineWidth=4;ctx.beginPath();ctx.arc(X(marker),Y(marker),8,0,Math.PI*2);ctx.fill();ctx.stroke();}
+  note.textContent=base===active?'A pályavonal az aktuális körrel épül fel. A színezés a rögzített miniszektor-időkön alapul.':'Referencia-pályavonal · vékony fehér vonal: aktuális kör nyomvonala · fehér pont: pozíció.';
+}
+
+if (![12, 24, 40].includes(ttN)) ttN = 24;
+
+const gapStr = (ms, d = 3) => { const v = ms / 1000; return (v < 0 ? '−' : '+') + Math.abs(v).toFixed(d); };
+
+function onTT(p) {
+  if (lastSeq === null) lastSeq = p.seq;
+  else if (p.seq !== lastSeq) { lastSeq = p.seq; if (p.last && p.last.ms) holdUntil = Date.now() + 5500; }
+  ttp = p; ttDirty = true;
+}
+
+function buildMinis() {
+  const box = $('minis');
+  box.style.gridTemplateColumns = `repeat(${ttN <= 12 ? 4 : ttN <= 24 ? 6 : 8}, 1fr)`;
+  box.className = ttN > 24 ? 'dense' : '';
+  box.innerHTML = Array.from({ length: ttN }, (_, i) => `<div class="mini"><small>${i + 1}</small><span></span><b></b></div>`).join('');
+  cells = [...box.children]; curIdx = -1; ttDirty = true;
+}
+
+function renderCells(cur, ref, P, bs, pf) {
+  const step = P / ttN, d = ttN > 24 ? 2 : 3;
+  cells.forEach((el, m) => {
+    const a = cur ? cur[m * step] : null, b = cur ? cur[(m + 1) * step] : null;
+    const sp = el.children[1], df = el.children[2];
+    el.dataset.c = '';
+    if (a == null || b == null) { sp.textContent = ''; df.textContent = ''; return; }
+    const split = b - a;
+    sp.textContent = (split / 1000).toFixed(d);
+    let diff = null;
+    if (ref) { diff = split - (ref[(m + 1) * step] - ref[m * step]); df.textContent = gapStr(diff, d); }
+    else df.textContent = '';
+    const record = pf ? !!pf[m] : !!(bs && bs[m] != null && split < bs[m]);
+    el.dataset.c = record ? 'p' : diff == null ? '' : diff < -5 ? 'g' : diff > 5 ? 'r' : 'y';
+  });
+}
+
+function drawDelta(cur, ref, P, prog) {
+  const c = $('dchart'), x = c.getContext('2d'), W = c.width, H = c.height, mid = H / 2;
+  x.clearRect(0, 0, W, H);
+  const pts = [];
+  if (cur && ref) for (let k = 1; k <= P; k++) if (cur[k] != null && ref[k] != null) pts.push([k, (cur[k] - ref[k]) / 1000]);
+  let m = 0.25;
+  pts.forEach(q => { m = Math.max(m, Math.abs(q[1])); });
+  m = Math.ceil(m * 4) / 4;
+  x.strokeStyle = '#3a4250'; x.lineWidth = 1; x.beginPath(); x.moveTo(0, mid); x.lineTo(W, mid); x.stroke();
+  x.fillStyle = '#8b93a1'; x.font = '30px system-ui, sans-serif';
+  x.fillText('−' + m.toFixed(2), 6, 30); x.fillText('+' + m.toFixed(2), 6, H - 10);
+  const X = k => k / P * W, Y = v => mid + v / m * (mid - 14);
+  x.lineWidth = 5; x.lineJoin = 'round';
+  for (let i = 1; i < pts.length; i++) {
+    x.strokeStyle = pts[i][1] <= 0 ? '#2ecc71' : '#ff4d4d';
+    x.beginPath(); x.moveTo(X(pts[i - 1][0]), Y(pts[i - 1][1])); x.lineTo(X(pts[i][0]), Y(pts[i][1])); x.stroke();
+  }
+  x.strokeStyle = '#e8eaed'; x.lineWidth = 2; x.beginPath(); x.moveTo(prog * W, 0); x.lineTo(prog * W, H); x.stroke();
+}
+
+function renderTT(s) {
+  const p = ttp;
+  if (!p) { $('ttnote').textContent = 'Adatra várok…'; return; }
+  const P = p.P, L = p.trackLen;
+  const holding = !!(p.last && p.last.ms) && Date.now() < holdUntil;
+  if (holding !== wasHolding) { wasHolding = holding; ttDirty = true; }
+  const cur = holding ? p.last.t : p.cur;
+  const ref = holding ? (ttRef === 'best' ? p.last.refBest : p.last.refPrev) : (ttRef === 'best' ? p.best : p.prev);
+  const refMs = ttRef === 'best' ? (holding ? (p.last.refBest ? p.last.refBest[P] : null) : p.bestMs) : (holding ? (p.last.refPrev ? p.last.refPrev[P] : null) : p.prevMs);
+
+  if (ttDirty) {
+    ttDirty = false;
+    const bs = p.bestSplit ? p.bestSplit[ttN] : null;
+    const pf = holding && p.last.purple ? p.last.purple[ttN] : null;
+    renderCells(cur, ref, P, bs, pf);
+    $('gridtitle').textContent = holding ? 'Előző kör mini-szektorai' : 'Mini-szektorok (aktuális kör)';
+  }
+
+  let gap = null;
+  if (holding) gap = refMs ? p.last.ms - refMs : null;
+  else gap = ttRef === 'best' ? s.deltaBest : s.deltaPrev;
+  const g = $('gap');
+  g.textContent = gap == null ? '—' : gapStr(gap);
+  g.className = 'gap' + (gap == null ? '' : gap <= 0 ? ' neg' : ' pos');
+  $('gaplabel').textContent = (holding ? 'Előző kör · ' : '') + (ttRef === 'best' ? 'a legjobb körhöz képest' : 'az előző körhöz képest');
+
+  let note = '';
+  if (!L) note = 'Pálya adatra várok (session csomag)…';
+  else if (holding) note = 'Előző kör eredménye' + (p.last.valid ? '' : ' (érvénytelen kör, nem lesz referencia)');
+  else if (!ref) note = refMs ? 'A referencia köridő megvan, de a részletes köradat hiányzik: az élő delta a következő teljesen rögzített kör után működik.' : (ttRef === 'best' ? 'Még nincs helyben rögzített érvényes kör. Válts az Előző kör nézetre, ha már van ott adat.' : 'Az előző kör adataira várok. Menj át a célvonalon egy érvényes körrel.');
+  else if (!s.connected) note = 'Nincs friss UDP-adat.';
+  else if (ttRef === 'prev' && p.prevValid === false) note = 'Az előző kör érvénytelen volt; a delta csak vezetési összehasonlítás.';
+  if (!ref && p.gamePbMs && !refMs && ttRef === 'best') note += ' A játék Personal Best ideje látszik, de annak részletes görbéjét nem küldi el az F1 24.';
+  $('ttnote').textContent = note;
+
+  $('tt-lap').textContent = s.lap ?? '-';
+  $('tt-cur').textContent = holding ? fmt(p.last.ms) : fmt(s.curLap);
+  $('tt-prev').textContent = fmt(p.prevMs);
+  $('tt-best').textContent = fmt(p.bestMs);
+  $('tt-gamepb').textContent = fmt(p.gamePbMs);
+  $('trkname').textContent = p.name ? p.name + ' · ' + p.trackLen + ' m' : 'Pálya: ismeretlen';
+
+  // valódi szektorok (S1/S2/S3) F1-es színekkel
+  const secRef = holding ? (ttRef === 'best' ? p.last.refBestSec : p.last.refPrevSec) : (ttRef === 'best' ? p.bestSec : p.prevSec);
+  const secT = holding ? (p.last.sec || [null, null, null]) : [s.sector >= 2 ? s.s1 : null, s.sector >= 3 ? s.s2 : null, null];
+  for (let i = 0; i < 3; i++) {
+    const t = secT[i], e = $('sec' + i);
+    let c = '';
+    if (t) {
+      const bsec = p.bestSector ? p.bestSector[i] : null;
+      const purple = holding ? !!(p.last.secPurple && p.last.secPurple[i]) : (bsec != null && t < bsec);
+      c = purple ? 'p' : secRef && secRef[i] ? (t < secRef[i] ? 'g' : t > secRef[i] ? 'y' : '') : '';
+    }
+    e.children[1].textContent = t ? fmt(t) : '-';
+    e.dataset.c = c;
+  }
+
+  const prog = L && s.lapDist > 0 ? Math.min(s.lapDist / L, 1) : 0;
+  $('progbar').style.width = (prog * 100).toFixed(1) + '%';
+  const idx = holding || !L ? -1 : Math.min(ttN - 1, Math.max(0, Math.floor(prog * ttN)));
+  if (idx !== curIdx) {
+    if (cells[curIdx]) cells[curIdx].classList.remove('cur');
+    if (cells[idx]) cells[idx].classList.add('cur');
+    curIdx = idx;
+  }
+
+  if (ttView === 'map') { refreshLiveMap(); if (performance.now() - liveMapDrawAt > 180) { liveMapDrawAt = performance.now(); drawTTMap(cur,ref,p,holding,prog); } }
+
+  const now = performance.now();
+  if (now - lastChart > 100) { lastChart = now; drawDelta(cur, ref, P, holding ? 1 : prog); }
+}
+
+const CMP = { 16: 'S', 17: 'M', 18: 'H', 7: 'I', 8: 'W' };
+function onLaps(p) { if (p.rev === lapsRev) return; lapsRev = p.rev; lapsData = p; renderLaps(); }
+function renderLaps() {
+  const d = lapsData, box = $('laps');
+  if (!d || !d.laps.length) { box.innerHTML = '<div class="note">Még nincs befejezett kör ezen a pályán.</div>'; return; }
+  const bs = d.bestSector || [];
+  const sc = (v, i, ok) => v == null ? '<td>-</td>' : `<td class="${ok && bs[i] != null && v === bs[i] ? 'p' : ''}">${fmt(v)}</td>`;
+  const rows = d.laps.slice().reverse().map(l => {
+    const isBest = l.ok && d.bestMs && l.ms === d.bestMs;
+    const last = l.ok ? (isBest ? 'legjobb' : d.bestMs ? gapStr(l.ms - d.bestMs) : '') : '✕';
+    return `<tr class="${l.ok ? '' : 'bad'}${l.sid !== d.sid ? ' old' : ''}"><td>${l.n}${CMP[l.cmp] ? ' ' + CMP[l.cmp] : ''}</td>` +
+      `<td class="${isBest ? 'p' : ''}">${fmt(l.ms)}</td>${sc(l.s && l.s[0], 0, l.ok)}${sc(l.s && l.s[1], 1, l.ok)}${sc(l.s && l.s[2], 2, l.ok)}` +
+      `<td class="m">${last}</td></tr>`;
+  }).join('');
+  box.innerHTML = '<table><tr><th>Kör</th><th>Idő</th><th>S1</th><th>S2</th><th>S3</th><th>Δ legjobb</th></tr>' + rows + '</table>';
+}
+
+function showTab(t) {
+  $('tab-dash').hidden = t !== 'dash';
+  $('tab-race').hidden = t !== 'race';
+  $('tab-tt').hidden = t !== 'tt';
+  $('tab-analyze').hidden = t !== 'analyze';
+  if(t === 'analyze'){ refreshArchive(); renderAnalyze(); }
+  if(t === 'race') fetchRace();
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  store.set('tab', t); ttDirty = true;
+}
+document.querySelectorAll('#nav button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+$('an-top-link').onclick = () => showTab('analyze');
+function markSeg() {
+  document.querySelectorAll('#refseg button').forEach(b => b.classList.toggle('on', b.dataset.ref === ttRef));
+  document.querySelectorAll('#nseg button').forEach(b => b.classList.toggle('on', +b.dataset.n === ttN));
+}
+document.querySelectorAll('#refseg button').forEach(b => b.onclick = () => { ttRef = b.dataset.ref; store.set('ttRef', ttRef); markSeg(); ttDirty = true; });
+document.querySelectorAll('#nseg button').forEach(b => b.onclick = () => { ttN = +b.dataset.n; store.set('ttN', ttN); markSeg(); buildMinis(); });
+$('fs').onclick = () => {
+  const d = document.documentElement;
+  if (document.fullscreenElement) document.exitFullscreen();
+  else if (d.requestFullscreen) d.requestFullscreen().catch(() => {});
+};
+async function keepAwake() { try { if (navigator.wakeLock) await navigator.wakeLock.request('screen'); } catch (e) {} }
+keepAwake();
+markSeg(); buildMinis(); setTTView(ttView);
+showTab(['dash','race','tt','analyze'].includes(store.get('tab','dash')) ? store.get('tab','dash') : 'dash');
+
+let latest = null, es = null, lastMsg = Date.now(), lastConnect = 0;
+function connect() {
+  if (es) es.close();
+  lastConnect = Date.now();
+  es = new EventSource('/events');
+  es.onmessage = e => { latest = JSON.parse(e.data); lastMsg = Date.now(); };
+  es.addEventListener('tt', e => onTT(JSON.parse(e.data)));
+  es.addEventListener('laps', e => onLaps(JSON.parse(e.data)));
+  es.onerror = () => { $('status').textContent = 'újracsatlakozás...'; $('status').className = ''; };
+}
+connect();
+// ha a stream elakad: közvetlen lekérdezés + újracsatlakozás
+setInterval(async () => {
+  const stale = Date.now() - lastMsg;
+  if (stale < 1000) return;
+  try {
+    const response = await fetch('/state', { cache: 'no-store' });
+     if (!response.ok) throw new Error('HTTP ' + response.status);
+     const j = await response.json();
+    if (j.tt) { onTT(j.tt); delete j.tt; }
+    if (j.laps) { onLaps(j.laps); delete j.laps; }
+    latest = j;
+  } catch (e) {
+    $('status').textContent = 'szerver nem elérhető'; $('status').className = '';
+  }
+  if (stale > 4000 && Date.now() - lastConnect > 4000) connect();
+}, 100);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { connect(); keepAwake(); } });
+(function loop() {
+  requestAnimationFrame(loop);
+  if (!latest) return;
+  try { update(latest); draw(); } catch (e) { console.error(e); }
+  try { if (!$('tab-tt').hidden) renderTT(latest); } catch (e) { console.error(e); }
+})();
+
+// --- Offline körelemző: önállóan működik a böngészőben, UDP kapcsolat nélkül is. ---
+const analyzed = new Map();
+let archiveChoices = [];
+const aEl = id => document.getElementById(id);
+const safeText = str => String(str == null ? '' : str);
+const timeOf = j => Number(j.ms) || Number(j.lastKnownTimeMs) || 0;
+function normalizeLap(j, label){
+  if(!j || !Array.isArray(j.samples)) throw new Error('Nem körarchívum JSON: samples mező hiányzik');
+  if(j.status && j.status !== 'completed') throw new Error('Ez nem befejezett kör: '+j.status);
+  const id = 'import-' + (analyzed.size+1) + '-' + Date.now();
+  return {id, label, data:j, trackId:j.trackId, trackLen:Number(j.trackLen), ms:timeOf(j)};
+}
+function addAnalyzed(j,label){
+  const l=normalizeLap(j,label); analyzed.set(l.id,l); updateAnalyzeOptions(l.id); renderAnalyze();
+}
+function updateAnalyzeOptions(chosen){
+  const items=[...analyzed.values()];
+  for(const sel of [aEl('an-current'),aEl('an-reference')]){
+    const previous=sel.value;
+    sel.replaceChildren();
+    const blank=document.createElement('option'); blank.value='';blank.textContent=sel.id==='an-reference'?'Nincs összehasonlítás':'Válassz kört';sel.append(blank);
+    items.forEach(l=>{const o=document.createElement('option');o.value=l.id;o.textContent=l.label+' · '+fmt(l.ms);sel.append(o)});
+    sel.value = previous && analyzed.has(previous) ? previous : (sel.id==='an-current' ? (chosen||'') : (items.length>1 ? items[items.length-2].id : ''));
+  }
+}
+async function refreshArchive(){
+  try{
+    const r=await fetch('/archive/list',{cache:'no-store'});if(!r.ok)throw new Error('Szerver nem elérhető');
+    archiveChoices=await r.json(); const sel=aEl('an-library'), old=sel.value;sel.replaceChildren();
+    const blank=document.createElement('option');blank.value='';blank.textContent='Válassz mentett kört…';sel.append(blank);
+    archiveChoices.forEach(l=>{const o=document.createElement('option');o.value=l.key;o.textContent=`${l.trackName} · ${fmt(l.ms)} · ${new Date(l.at).toLocaleString('hu-HU')}`;sel.append(o)});
+    sel.value=old;
+  }catch(e){aEl('an-message').textContent='Nincs szerverkapcsolat. Ettől még az offline JSON-betöltés működik.';}
+}
+aEl('an-refresh').onclick=refreshArchive;
+aEl('an-add').onclick=async()=>{
+  const key=aEl('an-library').value;if(!key)return;
+  try{const r=await fetch('/archive/lap?key='+encodeURIComponent(key));if(!r.ok)throw new Error('Kör nem tölthető be');
+    const j=await r.json();const entry=archiveChoices.find(x=>x.key===key);addAnalyzed(j,(entry?.trackName || 'Pálya')+' · '+new Date(j.at).toLocaleString('hu-HU'));
+  }catch(e){aEl('an-message').textContent='Hiba: '+e.message;}
+};
+aEl('an-files').onchange=async e=>{
+  let added=0,errors=[];
+  for(const file of e.target.files){try{addAnalyzed(JSON.parse(await file.text()),file.name);added++;}catch(err){errors.push(file.name+': '+err.message);}}
+  aEl('an-message').textContent=added+' JSON kör betöltve.'+(errors.length?' '+errors.join(' | '):'');
+  e.target.value='';
+};
+for(const id of ['an-current','an-reference','an-count','an-color-mode'])aEl(id).onchange=renderAnalyze;
+const anColors={purple:'#b76bff',green:'#20d18a',yellow:'#ffc857',red:'#fa5252',neutral:'#627286'};
+function pointsForLap(j){
+  // Motion worldX/worldZ: F1 coordinate space. Az archivált mintákban lapDist is van.
+  const L=Number(j.trackLen);
+  return j.samples.map(s=>({d:Number(s.lapDist),x:Number(s.worldX),z:Number(s.worldZ)}))
+    .filter(p=>Number.isFinite(p.d)&&p.d>=0&&p.d<=L+50&&Number.isFinite(p.x)&&Number.isFinite(p.z) && saneCoord(p.x,p.z))
+    .sort((a,b)=>a.d-b.d);
+}
+function saneCoord(x,z){return Math.abs(x)<100000 && Math.abs(z)<100000;}
+function curveForLap(j){
+  const P=120, L=Number(j.trackLen);
+  if(!(L>0))return null;
+  if(Array.isArray(j.timeCurve)&&j.timeCurve.length===121&&j.timeCurve.every(Number.isFinite))return j.timeCurve;
+  const pts=(j.samples||[]).map(s=>({d:Number(s.lapDist),t:Number(s.curLap)}))
+    .filter(p=>Number.isFinite(p.d)&&p.d>=0&&p.d<=L&&Number.isFinite(p.t)&&p.t>=0).sort((a,b)=>a.d-b.d);
+  if(pts.length<8 || pts[0].d>L*.12 || pts[pts.length-1].d<L*.85)return null;
+  const ms=timeOf(j);if(ms<10000)return null;
+  const all=[{d:0,t:0},...pts,{d:L,t:ms}];
+  const out=[];let k=0;
+  for(let i=0;i<=P;i++){const d=L*i/P;while(k+1<all.length-1 && all[k+1].d<d)k++;
+    const a=all[k],b=all[k+1];out.push(Math.round(a.t+(b.t-a.t)*Math.max(0,Math.min(1,(d-a.d)/Math.max(.001,b.d-a.d)))));}
+  return out;
+}
+function analyzeColors(l,ref,n){
+  const current=curveForLap(l.data), reference=ref?curveForLap(ref.data):null, st=120/n, result=[];
+  const records=[...analyzed.values()].filter(x=>x.trackId===l.trackId && x.trackLen===l.trackLen && x.data.valid!==false)
+    .map(x=>curveForLap(x.data)).filter(Boolean);
+  for(let i=0;i<n;i++){
+    const a=i*st,b=(i+1)*st,seg=current ? current[b]-current[a] : null;
+    const rseg=reference ? reference[b]-reference[a]:null;
+    const fastest=records.length?Math.min(...records.map(c=>c[b]-c[a])):null;
+    const purple=l.data.valid!==false && seg!=null && fastest!=null && Math.abs(seg-fastest)<.5;
+    const diff=seg!=null && rseg!=null ? seg-rseg : null;
+    const color=purple?'purple':diff===null?'neutral':diff < -5?'green':diff>5?'red':'yellow';
+    result.push({seg,diff,color});
+  }
+  return result;
+}
+function drawAnalyzeMap(j,colors,mode){
+  const canvas=aEl('an-map'),ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0c131d';ctx.fillRect(0,0,W,H);
+  const pts=pointsForLap(j),L=Number(j.trackLen),note=aEl('an-map-note');
+  if(pts.length<20 || new Set(pts.map(p=>Math.round(p.x)+','+Math.round(p.z))).size<15){
+    ctx.fillStyle='#b3c0d0';ctx.font='20px system-ui';ctx.textAlign='center';
+    ctx.fillText('Nincs rögzített GPS/nyomvonaladat',W/2,H/2-14);
+    ctx.font='15px system-ui';ctx.fillText('Az új köröktől a Motion koordinátákat is mentjük.',W/2,H/2+18);
+    note.textContent='A korábbi mentésekben nem voltak worldX/worldZ adatok, így ezekből pontos pályakörvonal nem rajzolható.';return;
+  }
+  note.textContent='A kirajzolt vonal a játék Motion telemetriájából felvett tényleges nyomvonal (felülnézet).';
+  let minX=Math.min(...pts.map(p=>p.x)),maxX=Math.max(...pts.map(p=>p.x)),minZ=Math.min(...pts.map(p=>p.z)),maxZ=Math.max(...pts.map(p=>p.z));
+  const scale=Math.min((W-90)/Math.max(1,maxX-minX),(H-90)/Math.max(1,maxZ-minZ));
+  const x=p=>(p.x-(minX+maxX)/2)*scale+W/2,y=p=>(p.z-(minZ+maxZ)/2)*-scale+H/2;
+  ctx.lineJoin='round';ctx.lineCap='round';ctx.lineWidth=17;ctx.strokeStyle='#273343';ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(x(p),y(p)):ctx.moveTo(x(p),y(p)));ctx.stroke();
+  const N=colors.length;
+  ctx.lineWidth=9;
+  for(let i=1;i<pts.length;i++){
+    const a=pts[i-1],b=pts[i];if(b.d-a.d>L*.10)continue;
+    const idx=Math.min(N-1,Math.max(0,Math.floor(((a.d+b.d)/2)/L*N)));
+    ctx.strokeStyle=mode==='plain'?'#f0f3f9':anColors[colors[idx].color];
+    ctx.beginPath();ctx.moveTo(x(a),y(a));ctx.lineTo(x(b),y(b));ctx.stroke();
+  }
+  const start=pts[0];ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x(start),y(start),7,0,Math.PI*2);ctx.fill();
+  ctx.textAlign='left';ctx.font='bold 16px system-ui';ctx.fillText('START',x(start)+14,y(start)-12);
+}
+function renderAnalyze(){
+  const l=analyzed.get(aEl('an-current').value),ref=analyzed.get(aEl('an-reference').value),count=Number(aEl('an-count').value);
+  if(!l){aEl('an-message').textContent='Adj hozzá egy kört az archívumból vagy válassz offline JSON-fájlt.';return;}
+  const comparable=ref && ref.trackId===l.trackId && ref.trackLen===l.trackLen ? ref:null;
+  const colors=analyzeColors(l,comparable,count);
+  const t=timeOf(l.data),r=comparable?timeOf(comparable.data):0;
+  aEl('an-time').textContent=fmt(t);aEl('an-ref-time').textContent=fmt(r);aEl('an-difference').textContent=r?gapStr(t-r):'–';
+  const minis=aEl('an-minis');minis.replaceChildren();
+  colors.forEach((v,i)=>{
+    const el=document.createElement('div');el.className='an-mini an-'+v.color;
+    const strong=document.createElement('strong');strong.textContent='MS '+(i+1);
+    const span=document.createElement('span');span.textContent=v.seg===null?'–':(v.seg/1000).toFixed(3)+' s';
+    const small=document.createElement('small');small.textContent=v.diff===null?'—':gapStr(v.diff);
+    el.append(strong,span,small);minis.append(el);
+  });
+  aEl('an-message').textContent=(l.data.trackName || l.label)+' · '+colors.length+' mini-szektor · '+(comparable?'Referencia: '+comparable.label:(ref?'Másik pálya/hossz: összehasonlítás tiltva.':'Nincs referencia kiválasztva.'));
+  drawAnalyzeMap(l.data,colors,aEl('an-color-mode').value);
+}
+// Race control UI. All pit predictions are estimates, not official game timings.
+let raceSnapshot=null, raceBusy=false, raceTrackKey='';
+const rc=(id,value)=>{const e=document.getElementById('rc-'+id);if(e)e.textContent=value==null?'—':String(value)};
+const rn=v=>Number.isFinite(Number(v))?Number(v):null;
+const rs=v=>rn(v)==null?'—':Number(v).toFixed(1)+' s';
+const raceModeName={green:'Zöld zászló',vsc:'VSC',sc:'Safety Car'};
+function raceConfig(track){
+ const key='raceConfig-'+track;
+ try{return JSON.parse(localStorage.getItem(key)||'{}')}catch(_){return {}}
+}
+function raceSettings(d){
+ const key=d.trackId+'-'+d.trackLen;
+ if(key!==raceTrackKey){raceTrackKey=key;const saved=raceConfig(key);
+ for(const [id,k] of [['base-loss','base'],['vsc-factor','vsc'],['sc-factor','sc']]){
+ const el=document.getElementById('rc-'+id);if(el)el.value=saved[k]??({base:22,vsc:65,sc:50}[k]);}}
+ const v=id=>Number(document.getElementById('rc-'+id)?.value);
+ return {base:Math.min(65,Math.max(8,v('base-loss')||22)),vsc:Math.min(100,Math.max(30,v('vsc-factor')||65))/100,sc:Math.min(100,Math.max(25,v('sc-factor')||50))/100};
+}
+function drawRaceMap(d){
+ const canvas=document.getElementById('rc-map');if(!canvas)return;
+ const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;
+ ctx.clearRect(0,0,w,h);ctx.fillStyle='#0b1019';ctx.fillRect(0,0,w,h);
+ const track=(d.track||[]).filter(p=>Array.isArray(p)&&p.length>=3&&Number.isFinite(p[1])&&Number.isFinite(p[2]));
+ const cars=(d.cars||[]).filter(c=>Number.isFinite(c.x)&&Number.isFinite(c.z));
+ const pts=track.map(p=>[p[1],p[2]]).concat(cars.map(c=>[c.x,c.z]));
+ if(pts.length<3){ctx.fillStyle='#a8b4c5';ctx.font='24px system-ui';ctx.textAlign='center';ctx.fillText('A pályavonal a megtett kör során épül fel',w/2,h/2);rc('map-note','A Motion UDP koordináták beérkezése után megjelenik a pálya és a mezőny.');return;}
+ let xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);let minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);
+ const scale=Math.min((w-110)/Math.max(1,maxx-minx),(h-110)/Math.max(1,maxy-miny));
+ const pt=(x,y)=>[(x-(minx+maxx)/2)*scale+w/2,(y-(miny+maxy)/2)*scale+h/2];
+ const line=(width,color)=>{ctx.beginPath();track.forEach((p,i)=>{const [x,y]=pt(p[1],p[2]);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.lineWidth=width;ctx.strokeStyle=color;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke()};
+ if(track.length>2){line(21,'#233348');line(10,'#8da0b8');}
+ const me=(d.cars||[]).find(c=>c.index===d.playerIndex);
+ const labels=document.getElementById('rc-labels')?.checked;
+ cars.forEach(c=>{const [x,y]=pt(c.x,c.z),mine=c.index===d.playerIndex;
+ const col=mine?'#f5f8ff':c.pitStatus?'#ffbf66':me&&c.position<me.position?'#f36b75':'#41d4a0';
+ ctx.beginPath();ctx.arc(x,y,mine?13:9,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#0b1019';ctx.lineWidth=3;ctx.stroke();
+ if(labels||mine){ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font=(mine?'bold 19px':'16px')+' system-ui';ctx.fillText((c.name||'#'+(c.index+1)).slice(0,12),x,y-19);}});
+ rc('map-note',track.length+' pályapont · '+cars.length+' autó helyzete · a pontosság a telemetria frissességétől függ');
+}
+function renderRace(d){
+ raceSnapshot=d;const cars=d.cars||[],me=cars.find(c=>c.index===d.playerIndex),s=d.session||{},damage=d.damage||{};
+ rc('connection',d.connected?'ÉLŐ UDP':'NINCS FRISS TELEMETRIA');rc('track',d.trackName||'Pályára várva');rc('cars-count',cars.length+' autó');
+ const sc=s.safetyCar===1?'sc':s.safetyCar===2?'vsc':'green';
+ rc('flag',raceModeName[sc]);rc('race-status',raceModeName[sc]);rc('lap',me?(me.lap+' / '+(s.totalLaps||'—')):'— / —');rc('pos',me?'P'+me.position:'P—');
+ const ahead=me?cars.find(c=>c.position===me.position-1):null,behind=me?cars.find(c=>c.position===me.position+1):null;
+ rc('ahead-name',ahead?.name||'—');rc('behind-name',behind?.name||'—');
+ rc('ahead-gap',me&&rn(me.deltaFrontMs)!=null?(me.deltaFrontMs/1000).toFixed(2)+' s':'—');
+ rc('behind-gap',behind&&rn(behind.deltaFrontMs)!=null?(behind.deltaFrontMs/1000).toFixed(2)+' s':'—');
+ rc('ers',me&&rn(me.ersPct)!=null?Math.round(me.ersPct)+'%':'—');rc('ers-detail',me&&rn(me.ersPct)!=null?me.ersPct.toFixed(1)+'%':'—');
+ rc('drs',me?(me.drsAllowed?'engedélyezett':'nem engedélyezett'):'—');rc('drs-allowed',me?(me.drsAllowed?'Igen':'Nem'):'—');
+ rc('fuel',rn(d.playerFuelLaps)!=null?Number(d.playerFuelLaps).toFixed(1)+' kör':'—');rc('fuel-laps',rn(d.playerFuelLaps)!=null?Number(d.playerFuelLaps).toFixed(2)+' kör':'—');
+ rc('fuel-note','Becsült hátralévő üzemanyag');rc('sc-delta',me&&rn(me.scDelta)!=null?Number(me.scDelta).toFixed(2)+' s':'—');
+ rc('rain',rn(s.rainChance)!=null?s.rainChance+'%':'—');rc('temps',(rn(s.airTemp)??'—')+'° / '+(rn(s.trackTemp)??'—')+'°C');
+ rc('pit-limit',rn(s.pitSpeed)!=null?s.pitSpeed+' km/h':'—');rc('limiter',me?(me.limiter?'Bekapcsolva':'Kikapcsolva'):'—');
+ rc('pit-window',s.pitIdeal?'Kör '+s.pitIdeal:'—');rc('game-pit',s.gameRejoin?'P'+s.gameRejoin:'—');
+ rc('last-event',d.lastEvent?.code||'—');rc('tyre',me?.tyre??'—');rc('tyre-dot',me?.tyre??'?');rc('tyre-age',me?.tyreAge!=null?me.tyreAge+' körös szett':'—');
+ rc('stops',me?.pitStops??'—');rc('penalties',me?.penalties??'—');
+ rc('wing',damage.frontLeft!=null?damage.frontLeft+'% / '+damage.frontRight+'%':'—');rc('rear-wing',damage.rear!=null?damage.rear+'%':'—');
+ rc('floor',damage.floor!=null?damage.floor+'% / '+damage.diffuser+'%':'—');rc('engine',damage.engine!=null?damage.engine+'% / '+damage.gearbox+'%':'—');
+ rc('fault',damage.drsFault||damage.ersFault?'DRS: '+(damage.drsFault?'HIBA':'OK')+' · ERS: '+(damage.ersFault?'HIBA':'OK'):'Nincs jelzett hiba');
+ rc('wear','Lásd az élő telemetria nézetet');
+ const cal=d.calibratedLoss||{};['green','vsc','sc'].forEach(m=>rc('cal-'+m,cal[m]?Number(cal[m].seconds).toFixed(1)+' s ('+cal[m].samples+' mérés)':'Nincs mérés'));
+ const cfg=raceSettings(d),selected=document.getElementById('rc-scenario')?.value||'auto',mode=selected==='auto'?sc:selected;
+ const calibrated=cal[mode]?.seconds;
+ const loss=calibrated??cfg.base*(mode==='vsc'?cfg.vsc:mode==='sc'?cfg.sc:1);
+ rc('pit-loss',loss.toFixed(1)+' s');rc('pit-scenario',raceModeName[mode]+(calibrated!=null?' · mért':' · beállított becslés'));
+ if(me&&cars.length>1&&d.trackLen>0){
+ const valid=cars.filter(c=>c.index!==me.index&&rn(c.totalDist)!=null);
+ const speed=Math.max(20,Math.min(90,(me.lastLapMs>25000?d.trackLen/(me.lastLapMs/1000):50)));
+ const rejoinDist=me.totalDist-loss*speed;
+ const aheadAfter=valid.filter(c=>c.totalDist>rejoinDist).sort((a,b)=>a.totalDist-b.totalDist);
+ const behindAfter=valid.filter(c=>c.totalDist<=rejoinDist).sort((a,b)=>b.totalDist-a.totalDist);
+ const pos=aheadAfter.length+1;
+ rc('pit-pos','P'+pos);rc('pit-confidence','Becsült átlagtempó: '+Math.round(speed*3.6)+' km/h');
+ rc('pit-surround',(aheadAfter[0]?.name||'—')+' / TE / '+(behindAfter[0]?.name||'—'));
+ rc('pit-order','Várhatóan '+(behindAfter[0]?.name||'a mezőny')+' elé, '+(aheadAfter[0]?.name||'az élen álló')+' mögé érkezel. A számítás nem modellezi a teljes SC-bolyt és az egyedi tempóváltozásokat.');
+ }else{rc('pit-pos','P—');rc('pit-confidence','További kör- és ellenféladat szükséges');rc('pit-surround','—');}
+ rc('classification-note',cars.length+' autó követhető');
+ const tbody=document.getElementById('rc-leaderboard');if(tbody){tbody.replaceChildren();cars.forEach(c=>{
+ const tr=document.createElement('tr');if(c.index===d.playerIndex)tr.className='race-me';
+ [c.position,c.name||'#'+c.index,c.tyre??'—',c.lap??'—',c.deltaLeaderMs!=null?(c.deltaLeaderMs/1000).toFixed(2)+' s':'—',c.pitStatus?'BOX':'—',c.penalties??'—'].forEach(value=>{const td=document.createElement('td');td.textContent=String(value);tr.appendChild(td)});tbody.appendChild(tr)})}
+ drawRaceMap(d);
+}
+async function fetchRace(){if(raceBusy)return;raceBusy=true;try{const r=await fetch('/race/state',{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);renderRace(await r.json())}catch(e){rc('connection','Szerver nem elérhető');console.warn('Race:',e.message)}finally{raceBusy=false}}
+setInterval(()=>{if(!document.getElementById('tab-race')?.hidden)fetchRace()},650);
+for(const id of ['base-loss','vsc-factor','sc-factor'])document.getElementById('rc-'+id)?.addEventListener('change',()=>{
+ if(!raceTrackKey)return;const cfg={base:Number(document.getElementById('rc-base-loss').value),vsc:Number(document.getElementById('rc-vsc-factor').value),sc:Number(document.getElementById('rc-sc-factor').value)};
+ localStorage.setItem('raceConfig-'+raceTrackKey,JSON.stringify(cfg));if(raceSnapshot)renderRace(raceSnapshot);
+});
+document.getElementById('rc-scenario')?.addEventListener('change',()=>{if(raceSnapshot)renderRace(raceSnapshot)});
+document.getElementById('rc-reset-settings')?.addEventListener('click',()=>{localStorage.removeItem('raceConfig-'+raceTrackKey);raceTrackKey='';if(raceSnapshot)renderRace(raceSnapshot)});
+
+</script>
+</body>
+</html>
